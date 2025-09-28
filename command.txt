@@ -1,0 +1,153 @@
+# Orchesity IDE OSS - Quick Start Commands
+
+## 🚀 Quick Setup and Run
+
+### 1. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Configure API Keys (Optional - for real LLM usage)
+Create a `.env` file in the project root:
+```bash
+# Copy from .env.example and add your keys
+cp .env.example .env
+
+# Edit .env with your API keys:
+OPENAI_API_KEY=your_openai_key_here
+ANTHROPIC_API_KEY=your_anthropic_key_here
+GEMINI_API_KEY=your_gemini_key_here
+GROK_API_KEY=your_grok_key_here
+```
+
+### 3. Run the Application
+```bash
+# Start the web server
+python -m src.main
+
+# Or use the Makefile shortcut
+make run
+
+# FastAPI Development with Auto-reload
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn src.main:app --reload
+```
+
+### 4. Open in Browser
+Visit: http://localhost:8000
+
+## 🧪 Testing
+
+### Run All Tests
+```bash
+pytest tests/ -v
+# Or use Makefile
+make test
+```
+
+### Format Code
+```bash
+black src/ tests/
+# Or use Makefile
+make format
+```
+
+## 📦 Building for Distribution
+
+### Build Package (for PyPI)
+```bash
+pip install build twine
+python -m build
+
+# Or use the build script
+python build_pypi.py
+```
+
+### Test Local Installation
+```bash
+pip install dist/orchesity_ide_oss-1.0.0.tar.gz
+```
+
+### Upload to PyPI (when ready)
+```bash
+twine upload dist/*
+```
+
+## 🐳 Docker (Optional)
+
+### Build Docker Image
+```bash
+docker build -t orchesity-ide-oss .
+```
+
+### Run with Docker
+```bash
+docker run -p 8000:8000 --env-file .env orchesity-ide-oss
+```
+
+### Docker Compose
+```bash
+docker-compose up -d
+```
+
+## 🔧 Development Commands
+
+### Clean Cache Files
+```bash
+make clean
+```
+
+### Show Available Commands
+```bash
+make help
+```
+
+### Run with Auto-reload (Development)
+```bash
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+## 📖 API Documentation
+
+Once running, visit:
+- Web Interface: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+- Alternative Docs: http://localhost:8000/redoc
+
+## 🔑 API Keys Setup
+
+For full functionality with real LLMs, set these environment variables:
+
+```bash
+export OPENAI_API_KEY="sk-..."
+export ANTHROPIC_API_KEY="sk-ant-..."
+export GEMINI_API_KEY="..."
+export GROK_API_KEY="..."
+```
+
+## 🆘 Troubleshooting
+
+### Port Already in Use
+```bash
+# Kill process on port 8000
+lsof -ti:8000 | xargs kill -9
+```
+
+### Permission Issues
+```bash
+# Run with sudo if needed
+sudo python -m src.main
+```
+
+### Import Errors
+```bash
+# Ensure you're in the project root
+cd /path/to/orchesity-ide-oss
+
+# Install in development mode
+pip install -e .
+```
+
+---
+
+**Happy orchestrating! 🎭🤖**
