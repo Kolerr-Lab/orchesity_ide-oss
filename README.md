@@ -5,7 +5,7 @@
 [![Python Version](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-An open-source Integrated Development Environment for Multi-LLM Orchestration, built with FastAPI and modern web technologies.
+An open-source Integrated Development Environment for Multi-LLM Orchestration, built with FastAPI and modern web technologies. **Save 25-40% on API costs** while improving performance and reliability through intelligent provider selection.
 
 ## Features
 
@@ -54,6 +54,7 @@ graph TB
 ```
 
 **Key Components:**
+
 - **DWA (Dynamic Weight Algorithm)**: Intelligent provider selection and performance optimization
 - **Redis Cache**: High-speed caching for responses and session data
 - **PostgreSQL**: Persistent storage for analytics and workflow management
@@ -125,9 +126,9 @@ pip install orchesity-ide-oss
 
 **Access Points:**
 
-- **Web Interface**: http://localhost:8000
-- **API Documentation**: http://localhost:8000/docs
-- **Health Check**: http://localhost:8000/api/health
+- **Web Interface**: `http://localhost:8000`
+- **API Documentation**: `http://localhost:8000/docs`
+- **Health Check**: `http://localhost:8000/api/health`
 
 ## 📖 API Documentation
 
@@ -163,6 +164,7 @@ Once running, visit `http://localhost:8000/docs` for interactive API documentati
 Orchesity IDE OSS features an intelligent **Dynamic Weight Algorithm** that automatically optimizes provider selection based on real-time performance metrics:
 
 **Selection Strategies:**
+
 - `max_accuracy` - Prioritize providers with highest success rates
 - `min_cost` - Optimize for lowest cost per token
 - `min_latency` - Select fastest responding providers  
@@ -170,6 +172,7 @@ Orchesity IDE OSS features an intelligent **Dynamic Weight Algorithm** that auto
 - `round_robin` - Simple rotation between providers
 
 **Custom Weighting:**
+
 ```python
 # Example: Cost-optimized strategy
 def cost_strategy(provider):
@@ -180,6 +183,7 @@ orchestrator.set_custom_dwa_weighting(cost_strategy)
 ```
 
 **Automatic Learning:**
+
 - Tracks response times, accuracy, and failure rates
 - Learns from every request to improve future selections
 - Automatically excludes failing providers
@@ -188,6 +192,7 @@ orchestrator.set_custom_dwa_weighting(cost_strategy)
 ### Redis Caching
 
 **Intelligent Caching System:**
+
 - **LLM Response Caching**: Automatic caching based on prompt+provider+model hash
 - **Session Storage**: User session data with configurable expiration
 - **Workflow Results**: Temporary storage for complex orchestration results
@@ -196,6 +201,7 @@ orchestrator.set_custom_dwa_weighting(cost_strategy)
 ### PostgreSQL Database
 
 **Persistent Storage Features:**
+
 - **Request History**: Complete audit trail of all orchestration requests
 - **Performance Analytics**: Provider metrics, response times, and costs
 - **User Sessions**: Persistent user data and preferences
@@ -236,7 +242,7 @@ pip install -i https://test.pypi.org/simple/ orchesity-ide-oss
 
 ## 📁 Project Structure
 
-```
+```text
 orchesity-ide-oss/
 ├── README.md                    # This file
 ├── LICENSE                      # MIT License
@@ -293,11 +299,21 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Inspired by the need for accessible multi-LLM development tools
 - Thanks to the open-source community for amazing libraries and frameworks
 
-## 📞 Support
+## � Documentation
+
+Comprehensive documentation is available in the [`docs/`](./docs/) directory:
+
+- **[LLM Orchestration Benefits](./docs/LLM_ORCHESTRATION_BENEFITS.md)** - Detailed analysis of cost savings, performance improvements, and ROI from multi-LLM orchestration
+- **[API Documentation](./docs/API_DOCUMENTATION.md)** - Complete API reference and usage examples
+- **[Database Setup](./docs/DATABASE_SETUP.md)** - PostgreSQL configuration and schema details
+- **[Docker Deployment](./docs/DOCKER.md)** - Containerized deployment guide
+- **[Migration Guide](./docs/MIGRATION_GUIDE.md)** - Upgrading from previous versions
+
+## �📞 Support
 
 - **Issues**: [GitHub Issues](https://github.com/Kolerr-Lab/Orchesity_IDE_OSS/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/Kolerr-Lab/Orchesity_IDE_OSS/discussions)
-- **Documentation**: [Wiki](https://github.com/Kolerr-Lab/Orchesity_IDE_OSS/wiki)
+- **Documentation**: See the [`docs/`](./docs/) directory for comprehensive guides
 
 ---
 
