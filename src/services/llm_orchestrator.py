@@ -13,6 +13,8 @@ import random
 from ..models import OrchestrationRequest, LLMResult, LLMProvider
 from ..config import settings
 from ..utils.logger import get_logger
+from .cache import cache
+from .DWA import DynamicWeightAlgorithm, SelectionPolicy
 
 logger = get_logger(__name__)
 
@@ -34,12 +36,19 @@ class ProviderLoad:
 
 
 class LLMOrchestrator:
-    """Core orchestrator for multi-LLM operations"""
+    """Core orchestrator for multi-LLM operations with DWA integration"""
 
     def __init__(self):
         self.providers_load: Dict[LLMProvider, ProviderLoad] = {}
         self._initialize_provider_loads()
         self.routing_strategy = RoutingStrategy(settings.routing_strategy)
+        
+        # Initialize Dynamic Weight Algorithm
+        self.dwa = DynamicWeightAlgorithm(
+            providers=list(LLMProvider),
+            selection_policy=self._map_routing_strategy_to_dwa_policy()
+        )
+        logger.info("LLM Orchestrator initialized with DWA integration")
 
     def _initialize_provider_loads(self):
         """Initialize load tracking for each provider"""
@@ -48,6 +57,16 @@ class LLMOrchestrator:
                 provider=provider,
                 max_load=settings.max_concurrent_requests // len(LLMProvider),
             )
+    
+    def _map_routing_strategy_to_dwa_policy(self) -> SelectionPolicy:
+        """Map orchestrator routing strategy to DWA selection policy"""
+        strategy_mapping = {
+            RoutingStrategy.LOAD_BALANCED: SelectionPolicy.WEIGHTED_COMPOSITE,
+            RoutingStrategy.ROUND_ROBIN: SelectionPolicy.ROUND_ROBIN,
+            RoutingStrategy.RANDOM: SelectionPolicy.ROUND_ROBIN,  # Use round robin for random
+            RoutingStrategy.PRIORITY: SelectionPolicy.MAX_ACCURACY
+        }
+        return strategy_mapping.get(self.routing_strategy, SelectionPolicy.MAX_ACCURACY)
 
     async def orchestrate(
         self, request: OrchestrationRequest
@@ -72,7 +91,7 @@ class LLMOrchestrator:
         # Wait for all tasks to complete
         task_results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        # Process results
+        # Process results and feed back to DWA
         for i, result in enumerate(task_results):
             provider = providers_to_use[i]
             if isinstance(result, Exception):
@@ -83,10 +102,27 @@ class LLMOrchestrator:
                 }
                 errors.append(error_info)
                 self._update_provider_load(provider, success=False)
+                
+                # Update DWA with failure
+                self.dwa.record_request_result(
+                    provider.value,
+                    success=False,
+                    response_time=1.0,  # Default penalty time
+                    error=str(result)
+                )
             else:
                 results.append(result)
-                self._update_provider_load(
-                    provider, success=True, response_time=result.get("response_time", 0)
+                response_time = result.response_time if hasattr(result, 'response_time') else 1.0
+                tokens_used = result.tokens_used if hasattr(result, 'tokens_used') else None
+                
+                self._update_provider_load(provider, success=True, response_time=response_time)
+                
+                # Update DWA with success
+                self.dwa.record_request_result(
+                    provider.value,
+                    success=True,
+                    response_time=response_time,
+                    tokens_used=int(tokens_used) if tokens_used else None
                 )
 
         return results, errors
@@ -108,16 +144,54 @@ class LLMOrchestrator:
         if not available_providers:
             raise ValueError("No LLM providers are configured or available")
 
-        if self.routing_strategy == RoutingStrategy.ROUND_ROBIN:
-            return self._round_robin_select(available_providers)
-        elif self.routing_strategy == RoutingStrategy.LOAD_BALANCED:
-            return self._load_balanced_select(available_providers)
-        elif self.routing_strategy == RoutingStrategy.RANDOM:
-            return [random.choice(available_providers)]
-        elif self.routing_strategy == RoutingStrategy.PRIORITY:
-            return self._priority_select(available_providers)
+        # Use DWA for intelligent provider selection
+        selected_providers = []
+        
+        if len(requested_providers) == 1:
+            # Single provider request - use DWA to validate choice
+            provider_name = requested_providers[0].value
+            provider_metrics = self.dwa.provider_metrics.get(provider_name)
+            if provider_metrics and provider_metrics.availability > 0.1:
+                selected_providers = requested_providers
+            else:
+                # Fallback to DWA best selection
+                best_provider_name = self.dwa.select_best_provider()
+                if best_provider_name:
+                    try:
+                        selected_providers = [LLMProvider(best_provider_name)]
+                    except ValueError:
+                        pass
         else:
-            return available_providers[:1]  # Default to first available
+            # Multiple providers - use DWA to rank and select
+            exclude_failed = []
+            for _ in range(min(len(available_providers), 3)):  # Max 3 providers for performance
+                best_name = self.dwa.select_best_provider(exclude_providers=exclude_failed)
+                if best_name:
+                    try:
+                        provider_enum = LLMProvider(best_name)
+                        if provider_enum in available_providers:
+                            selected_providers.append(provider_enum)
+                            exclude_failed.append(best_name)
+                    except ValueError:
+                        exclude_failed.append(best_name)
+                else:
+                    break
+        
+        # Fallback to original logic if DWA selection fails
+        if not selected_providers:
+            if self.routing_strategy == RoutingStrategy.ROUND_ROBIN:
+                selected_providers = self._round_robin_select(available_providers)
+            elif self.routing_strategy == RoutingStrategy.LOAD_BALANCED:
+                selected_providers = self._load_balanced_select(available_providers)
+            elif self.routing_strategy == RoutingStrategy.RANDOM:
+                selected_providers = [random.choice(available_providers)]
+            elif self.routing_strategy == RoutingStrategy.PRIORITY:
+                selected_providers = self._priority_select(available_providers)
+            else:
+                selected_providers = available_providers[:1]
+
+        logger.info(f"DWA selected providers: {[p.value for p in selected_providers]}")
+        return selected_providers
 
     def _is_provider_available(self, provider: LLMProvider) -> bool:
         """Check if a provider is configured and not overloaded"""
@@ -174,25 +248,55 @@ class LLMOrchestrator:
     async def _execute_provider_request(
         self, provider: LLMProvider, request: OrchestrationRequest
     ) -> LLMResult:
-        """Execute request against a specific provider"""
+        """Execute request against a specific provider with caching"""
+        model = self._get_provider_model(provider)
+        
+        # Check cache first (if not streaming)
+        if not request.stream:
+            cached_response = await cache.get_cached_llm_response(
+                request.prompt, provider.value, model
+            )
+            if cached_response:
+                logger.info(f"🎯 Using cached response for {provider.value}")
+                return LLMResult(
+                    provider=provider,
+                    model=model,
+                    response=cached_response["response"],
+                    response_time=cached_response["response_time"],
+                    tokens_used=cached_response.get("tokens_used", 0),
+                )
+
         start_time = time.time()
 
         try:
             # Increment load
             self.providers_load[provider].current_load += 1
 
-            # Simulate API call (replace with actual provider SDK calls)
+            # Execute actual provider request
             response = await self._call_provider_api(provider, request)
-
             response_time = time.time() - start_time
+            tokens_used = len(response.split()) * 1.3  # Rough estimate
 
-            return LLMResult(
+            result = LLMResult(
                 provider=provider,
+                model=model,
                 response=response,
                 response_time=response_time,
-                tokens_used=len(response.split()) * 1.3,  # Rough estimate
-                model=self._get_provider_model(provider),
+                tokens_used=tokens_used,
             )
+
+            # Cache the response (if not streaming)
+            if not request.stream:
+                await cache.cache_llm_response(
+                    request.prompt,
+                    provider.value,
+                    model,
+                    response,
+                    int(tokens_used),
+                    response_time
+                )
+
+            return result
 
         finally:
             # Decrement load
@@ -253,3 +357,28 @@ class LLMOrchestrator:
                 "available": self._is_provider_available(provider),
             }
         return stats
+    
+    def get_dwa_statistics(self) -> Dict[str, Any]:
+        """Get DWA provider statistics and performance metrics"""
+        return {
+            "provider_stats": self.dwa.get_provider_stats(),
+            "selection_policy": self.dwa.selection_policy.value,
+            "routing_strategy": self.routing_strategy.value,
+            "active_providers": len(self.dwa.get_active_providers()),
+            "total_providers": len(self.dwa.provider_metrics)
+        }
+    
+    def reset_dwa_metrics(self, provider_name: str = None):
+        """Reset DWA metrics for a specific provider or all providers"""
+        if provider_name:
+            self.dwa.reset_provider_metrics(provider_name)
+            logger.info(f"Reset DWA metrics for {provider_name}")
+        else:
+            for provider_name in self.dwa.provider_metrics.keys():
+                self.dwa.reset_provider_metrics(provider_name)
+            logger.info("Reset DWA metrics for all providers")
+    
+    def set_custom_dwa_weighting(self, strategy_func):
+        """Set a custom DWA weighting strategy"""
+        self.dwa.set_custom_weighting_strategy(strategy_func)
+        logger.info("Applied custom DWA weighting strategy")

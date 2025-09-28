@@ -35,7 +35,23 @@ async def health_check():
             },
         }
 
-        # Check LLM provider configurations
+        # Check LLM provider configurations and DWA status
+        from ..services.llm_orchestrator import orchestrator
+        
+        try:
+            dwa_stats = orchestrator.get_dwa_statistics()
+            services_status["dwa"] = {
+                "status": "healthy",
+                "active_providers": dwa_stats["active_providers"],
+                "total_providers": dwa_stats["total_providers"],
+                "selection_policy": dwa_stats["selection_policy"]
+            }
+        except Exception as e:
+            services_status["dwa"] = {
+                "status": "error",
+                "error": str(e)
+            }
+        
         llm_providers = []
         if settings.openai_api_key:
             llm_providers.append("openai")

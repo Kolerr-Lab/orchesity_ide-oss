@@ -33,11 +33,17 @@ class Settings(BaseSettings):
         "load_balanced"  # load_balanced, round_robin, random, priority
     )
 
-    # Optional: Database
-    database_url: Optional[str] = None
+    # Database
+    database_url: str = "postgresql://orchesity:orchesity@localhost:5432/orchesity_db"
+    database_echo: bool = False
+    database_pool_size: int = 10
+    database_max_overflow: int = 20
 
-    # Optional: Redis
-    redis_url: Optional[str] = None
+    # Redis
+    redis_url: str = "redis://localhost:6379"
+    redis_db: int = 0
+    redis_max_connections: int = 10
+    cache_expire_seconds: int = 3600  # 1 hour default
 
     # Optional: Monitoring
     sentry_dsn: Optional[str] = None

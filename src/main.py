@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 
 from .config import settings
-from .routers import llm, user, health
+from .routers import llm, user, health, database
 from .utils.logger import setup_logger
 
 # Setup logging
@@ -47,6 +47,7 @@ if static_path.exists():
 app.include_router(llm, prefix="/api/llm", tags=["LLM Orchestration"])
 app.include_router(user, prefix="/api/user", tags=["User Management"])
 app.include_router(health, prefix="/api/health", tags=["Health Checks"])
+app.include_router(database, prefix="/api/db", tags=["Database & Cache"])
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -144,6 +145,24 @@ async def root():
 async def startup_event():
     """Application startup tasks"""
     print("🚀 Starting Orchesity IDE OSS...")
+    
+    # Initialize database connection
+    try:
+        from .database.database import init_db, create_tables
+        await init_db()
+        await create_tables()
+        print("✅ Database initialized successfully")
+    except Exception as e:
+        print(f"⚠️ Database initialization failed: {e}")
+    
+    # Initialize Redis cache
+    try:
+        from .services.cache import cache
+        await cache.connect()
+        print("✅ Redis cache connected successfully")
+    except Exception as e:
+        print(f"⚠️ Redis cache connection failed: {e}")
+    
     print(f"📖 API Documentation: http://localhost:{settings.port}/docs")
     print(f"🌐 Web Interface: http://localhost:{settings.port}")
 
@@ -152,6 +171,22 @@ async def startup_event():
 async def shutdown_event():
     """Application shutdown tasks"""
     print("👋 Shutting down Orchesity IDE OSS...")
+    
+    # Close database connection
+    try:
+        from .database.database import close_db
+        await close_db()
+        print("🔌 Database disconnected")
+    except Exception as e:
+        print(f"Failed to close database: {e}")
+    
+    # Close Redis connection
+    try:
+        from .services.cache import cache
+        await cache.disconnect()
+        print("🔌 Redis cache disconnected")
+    except Exception as e:
+        print(f"Failed to close Redis: {e}")
 
 
 if __name__ == "__main__":

@@ -137,6 +137,51 @@ async def test_provider(provider: LLMProvider):
         return {"provider": provider.value, "status": "error", "error": str(e)}
 
 
+@router.get("/dwa/stats")
+async def get_dwa_statistics():
+    """Get Dynamic Weight Algorithm statistics and provider metrics"""
+    try:
+        return orchestrator.get_dwa_statistics()
+    except Exception as e:
+        logger.error(f"Failed to get DWA statistics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/dwa/reset")
+async def reset_dwa_metrics(provider: str = None):
+    """Reset DWA metrics for a specific provider or all providers"""
+    try:
+        orchestrator.reset_dwa_metrics(provider)
+        return {
+            "message": f"Reset DWA metrics for {'all providers' if not provider else provider}",
+            "provider": provider
+        }
+    except Exception as e:
+        logger.error(f"Failed to reset DWA metrics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/dwa/best-provider")
+async def get_best_provider():
+    """Get the current best provider according to DWA"""
+    try:
+        best_provider = orchestrator.dwa.select_best_provider()
+        if best_provider:
+            provider_stats = orchestrator.dwa.provider_metrics[best_provider]
+            return {
+                "best_provider": best_provider,
+                "accuracy": provider_stats.accuracy,
+                "speed": provider_stats.speed,
+                "availability": provider_stats.availability,
+                "consecutive_failures": provider_stats.consecutive_failures
+            }
+        else:
+            return {"best_provider": None, "message": "No providers available"}
+    except Exception as e:
+        logger.error(f"Failed to get best provider: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 async def process_orchestration_async(request_id: str, request: OrchestrationRequest):
     """Process orchestration asynchronously"""
     try:

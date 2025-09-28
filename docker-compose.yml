@@ -1,6 +1,41 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: orchesity_db
+      POSTGRES_USER: orchesity
+      POSTGRES_PASSWORD: orchesity
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orchesity -d orchesity_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass orchesity_redis
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Main application
   orchesity-ide-oss:
     build: .
     ports:
@@ -11,6 +46,12 @@ services:
       - LOG_LEVEL=INFO
       - HOST=0.0.0.0
       - PORT=8000
+      # Database configuration
+      - DATABASE_URL=postgresql://orchesity:orchesity@postgres:5432/orchesity_db
+      - DATABASE_ECHO=false
+      # Redis configuration
+      - REDIS_URL=redis://:orchesity_redis@redis:6379
+      - CACHE_EXPIRE_SECONDS=3600
       # Add your API keys here or use .env file
       # - OPENAI_API_KEY=your_key
       # - ANTHROPIC_API_KEY=your_key
@@ -20,6 +61,11 @@ services:
       - .env
     volumes:
       - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
@@ -28,20 +74,6 @@ services:
       retries: 3
       start_period: 40s
 
-  # Optional: Add Redis for session storage
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    restart: unless-stopped
-    command: redis-server --appendonly yes
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
 volumes:
+  postgres_data:
   redis_data:
