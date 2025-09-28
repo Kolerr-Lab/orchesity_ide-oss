@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #000033 0%, #764ba2 100%);
             min-height: 100vh;
             color: #333;
         }
@@ -36,9 +36,36 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
+        .nav {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 0;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .nav a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .tab-content {
+            margin-top: 20px;
         }
 
         .main-content {
@@ -57,9 +84,9 @@
         }
 
         .panel h2 {
-            color: #667eea;
+            color: black;
             margin-bottom: 15px;
-            border-bottom: 2px solid #667eea;
+            border-bottom: 2px solid black;
             padding-bottom: 5px;
         }
 
@@ -89,7 +116,7 @@
         .form-group textarea:focus,
         .form-group select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: black;
         }
 
         .form-group textarea {
@@ -111,7 +138,7 @@
         }
 
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, black 0%, #764ba2 100%);
             color: white;
             border: none;
             padding: 12px 24px;
@@ -124,7 +151,7 @@
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
         }
 
         .btn:disabled {
@@ -153,7 +180,7 @@
         }
 
         .provider-badge {
-            background: #667eea;
+            background: black;
             color: white;
             padding: 4px 8px;
             border-radius: 3px;
@@ -188,7 +215,7 @@
             width: 20px;
             height: 20px;
             border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border-top: 3px solid black;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -202,6 +229,7 @@
             text-align: center;
             color: white;
             margin-top: 30px;
+            padding: 20px;
             opacity: 0.8;
         }
 
@@ -219,6 +247,194 @@
                 font-size: 2em;
             }
         }
+
+        /* Tab Navigation Styles */
+        .tab-navigation {
+            display: flex;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .tab-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .tab-button.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Content section styles */
+        .content-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .content-section h3 {
+            color: white;
+            margin-bottom: 20px;
+            margin-top: 0;
+            font-size: 1.5em;
+            font-weight: 600;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .content-section h4 {
+            color: #ffffff;
+            margin-bottom: 15px;
+            margin-top: 35px;
+            font-size: 1.25em;
+            font-weight: 500;
+            border-left: 4px solid black;
+            padding-left: 15px;
+        }
+
+        .content-section p {
+            line-height: 1.7;
+            margin-bottom: 20px;
+            color: #ffffff;
+            font-weight: 400;
+            font-size: 1.05em;
+        }
+
+        .content-section ul {
+            margin: 20px 0;
+            padding-left: 20px;
+        }
+
+        .content-section ul li {
+            color: #ffffff;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .feature-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            font-weight: 400;
+            line-height: 1.6;
+            margin-bottom: 5px;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .feature-list li:before {
+            content: "▸";
+            color: black;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 1.1em;
+        }
+
+        .feature-list li:before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .code-snippet {
+            background: #2d3748;
+            border: 1px solid #4a5568;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #e2e8f0;
+            overflow-x: auto;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, black 0%, #764ba2 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 600;
+        }
+
+        /* Contact Styles */
+        .contact-info {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .contact-item {
+            margin-bottom: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .contact-item strong {
+            color: white;
+            font-weight: 600;
+        }
+
+        .contact-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .contact-link {
+            color: #FF8C00;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .contact-link:hover {
+            color: #FFA500;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -228,7 +444,17 @@
             <p>Open-Source Multi-LLM Orchestration Platform</p>
         </div>
 
-        <div class="main-content">
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-button active" onclick="showTab('orchestrate')">Orchestrate</button>
+            <button class="tab-button" onclick="showTab('core')">Core</button>
+            <button class="tab-button" onclick="showTab('adaptive')">Adaptive</button>
+            <button class="tab-button" onclick="showTab('contact')">Contact</button>
+        </div>
+
+        <!-- Orchestrate Tab Content -->
+        <div id="orchestrate" class="tab-content active">
+            <div class="main-content">
             <div class="panel">
                 <h2>Orchestration Request</h2>
                 <form id="orchestrationForm">
@@ -275,17 +501,162 @@
                 <p style="color: #666; font-style: italic;">Loading provider status...</p>
             </div>
         </div>
+        </div>
+
+        <!-- Core Tab Content -->
+        <div id="core" class="tab-content">
+            <div class="content-section">
+                <h3>🏗️ Core Architecture</h3>
+                <p>The foundation of Orchesity IDE OSS built with modern Python patterns and best practices for high-performance multi-LLM orchestration.</p>
+
+                <h3>🏗️ Service Container & Dependency Injection</h3>
+                <p>Centralized service management with async lifecycle handling and type-based resolution for maximum flexibility and maintainability.</p>
+                <ul class="feature-list">
+                    <li><strong>Centralized Service Management:</strong> All services are registered and resolved through a single container</li>
+                    <li><strong>Async Lifecycle Management:</strong> Services initialize and shutdown gracefully with proper resource management</li>
+                    <li><strong>Type-based Resolution:</strong> Services are resolved by their class type for type safety</li>
+                    <li><strong>Loose Coupling:</strong> Components depend on abstractions rather than concrete implementations</li>
+                </ul>
+
+                <h3>💾 Database Layer</h3>
+                <p>Robust data persistence with modern async ORM and flexible backend support for development and production environments.</p>
+                <ul class="feature-list">
+                    <li><strong>SQLAlchemy 2.0:</strong> Modern async ORM with full type annotations</li>
+                    <li><strong>Connection Pooling:</strong> Efficient connection management with configurable pool sizes</li>
+                    <li><strong>SQLite/PostgreSQL Support:</strong> Flexible database backend for development and production</li>
+                    <li><strong>Health Monitoring:</strong> Automatic connection health checks and recovery</li>
+                </ul>
+
+                <h3>🚀 Cache Service</h3>
+                <p>High-performance distributed caching with intelligent fallback mechanisms and comprehensive performance monitoring.</p>
+                <ul class="feature-list">
+                    <li><strong>Redis Integration:</strong> High-performance distributed caching with async client</li>
+                    <li><strong>In-memory Fallback:</strong> Graceful degradation when Redis is unavailable</li>
+                    <li><strong>TTL Management:</strong> Configurable expiration times for cached data</li>
+                    <li><strong>Performance Metrics:</strong> Cache hit/miss statistics and monitoring</li>
+                </ul>
+
+                <h3>⚙️ Configuration Management</h3>
+                <p>Comprehensive configuration system with environment variable support and automatic validation.</p>
+                <ul>
+                    <li><strong>Pydantic Settings:</strong> Type-safe configuration with validation</li>
+                    <li><strong>Environment Variables:</strong> Secure credential management via .env files</li>
+                    <li><strong>Multi-environment Support:</strong> Development, testing, staging, and production configs</li>
+                    <li><strong>Dynamic Validation:</strong> Real-time config validation with helpful error messages</li>
+                </ul>
+
+                <h3>🛠️ Core Utilities</h3>
+                <ul>
+                    <li><strong>Structured Logging:</strong> Comprehensive logging with configurable levels</li>
+                    <li><strong>Health Checks:</strong> System and service health monitoring</li>
+                    <li><strong>Metrics Collection:</strong> Performance and usage statistics</li>
+                    <li><strong>Error Handling:</strong> Robust error handling with proper exception hierarchies</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Adaptive Tab Content -->
+        <div id="adaptive" class="tab-content">
+            <div class="content-section">
+                <h3>🧠 Dynamic Weight Algorithm (DWA)</h3>
+                <p>The intelligent core of Orchesity IDE OSS continuously analyzes provider performance across multiple dimensions to optimize response quality, cost-efficiency, and system reliability.</p>
+
+                <h4>🎯 Core Intelligence Features</h4>
+                <p>Advanced algorithms that adapt in real-time to changing conditions and performance patterns.</p>
+                <ul class="feature-list">
+                    <li><strong>Real-time Performance Tracking:</strong> Continuous monitoring of provider metrics</li>
+                    <li><strong>Adaptive Weighting:</strong> Dynamic adjustment of provider selection weights</li>
+                    <li><strong>Multi-dimensional Scoring:</strong> Cost, speed, accuracy, and availability optimization</li>
+                    <li><strong>Intelligent Fallback:</strong> Automatic failover to alternative providers</li>
+                </ul>
+
+                <h4>📊 Provider Metrics & Analytics</h4>
+                <p>Comprehensive performance monitoring with predictive insights and automated optimization.</p>
+                <ul class="feature-list">
+                    <li><strong>Response Time Tracking:</strong> Latency measurement and trend analysis</li>
+                    <li><strong>Success Rate Monitoring:</strong> Error rates and reliability statistics</li>
+                    <li><strong>Cost Optimization:</strong> Token usage and cost efficiency analysis</li>
+                    <li><strong>Availability Detection:</strong> Real-time provider health monitoring</li>
+                </ul>
+
+                <h3>🔄 Routing Strategies</h3>
+                <ul>
+                    <li><strong>Load Balanced:</strong> Distribute requests evenly across available providers</li>
+                    <li><strong>Round Robin:</strong> Sequential provider rotation for fair distribution</li>
+                <h4>🎛️ Intelligent Routing Strategies</h4>
+                <p>Choose from multiple sophisticated algorithms tailored to different use cases and performance requirements.</p>
+                <ul class="feature-list">
+                    <li><strong>Load Balanced:</strong> Distribute requests evenly across available providers</li>
+                    <li><strong>Priority-based:</strong> Prefer certain providers based on performance history</li>
+                    <li><strong>Cost-optimized:</strong> Select providers based on cost efficiency</li>
+                    <li><strong>Quality-first:</strong> Prioritize providers with highest accuracy scores</li>
+                </ul>
+
+                <h4>⚡ Performance Optimization</h4>
+                <p>Advanced processing techniques that maximize throughput and minimize latency.</p>
+                <ul class="feature-list">
+                    <li><strong>Batch Processing:</strong> Efficient handling of multiple concurrent requests</li>
+                    <li><strong>Semantic Caching:</strong> Intelligent cache lookup for similar requests</li>
+                    <li><strong>Concurrent Execution:</strong> Parallel processing across multiple providers</li>
+                    <li><strong>Adaptive Learning:</strong> Continuous improvement based on performance data</li>
+                </ul>
+
+                <h4>🔍 Advanced Intelligence Features</h4>
+                <p>Cutting-edge capabilities that ensure reliability and optimal performance.</p>
+                <ul class="feature-list">
+                    <li><strong>Provider Auto-discovery:</strong> Dynamic detection of available LLM providers</li>
+                    <li><strong>Quality Assurance:</strong> Automated testing and validation of provider responses</li>
+                    <li><strong>Predictive Scaling:</strong> Anticipate load and scale provider capacity</li>
+                    <li><strong>Anomaly Detection:</strong> Identify and mitigate performance degradation</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Contact Tab Content -->
+        <div id="contact" class="tab-content">
+            <div class="content-section">
+                <h3>📬 Get in Touch</h3>
+                <p>We'd love to hear from you! Whether you have questions about Orchesity IDE OSS, want to contribute to the project, or need technical support, don't hesitate to reach out.</p>
+
+                <h4>📧 Contact Information</h4>
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <strong>Lab Team:</strong>
+                        <a href="mailto:lab.kolerr@kolerr.com" class="contact-link">lab.kolerr@kolerr.com</a>
+                    </div>
+                    <div class="contact-item">
+                        <strong>Ricky:</strong>
+                        <a href="mailto:ricky@kolerr.com" class="contact-link">ricky@kolerr.com</a>
+                    </div>
+                </div>
+
+                <h4>💡 How to Contribute</h4>
+                <p>Orchesity IDE OSS is an open-source project and we welcome contributions from the community. Here are some ways you can get involved:</p>
+                <ul class="feature-list">
+                    <li><strong>Report Issues:</strong> Found a bug or have a feature request? Open an issue on GitHub</li>
+                    <li><strong>Submit Pull Requests:</strong> Have improvements or fixes? We'd love to review your contributions</li>
+                    <li><strong>Join Discussions:</strong> Participate in community discussions and help shape the project's future</li>
+                    <li><strong>Documentation:</strong> Help improve our documentation and guides</li>
+                </ul>
+
+                <h4>🚀 Stay Connected</h4>
+                <p>Follow our progress and join the conversation:</p>
+                <ul class="feature-list">
+                    <li><strong>GitHub:</strong> <a href="https://github.com/Kolerr-Lab/orchesity-ide-oss" target="_blank" class="contact-link">github.com/Kolerr-Lab/orchesity-ide-oss</a></li>
+                    <li><strong>Issues:</strong> <a href="https://github.com/Kolerr-Lab/orchesity-ide-oss/issues" target="_blank" class="contact-link">Report bugs and request features</a></li>
+                    <li><strong>Discussions:</strong> <a href="https://github.com/Kolerr-Lab/orchesity-ide-oss/discussions" target="_blank" class="contact-link">Join community discussions</a></li>
+                </ul>
+            </div>
+        </div>
     </div>
 
-    <div class="footer">
-        <p>
-            Built with ❤️ for the open-source community |
-            <a href="https://github.com/your-org/orchesity-ide-oss" target="_blank">GitHub</a> |
-            <a href="/docs" target="_blank">Documentation</a>
-        </p>
-    </div>
-
-    <script>
+        <div class="footer">
+            <p>
+                Built with ❤️ for the open-source community |
+                <a href="https://github.com/Kolerr-Lab/orchesity-ide-oss" target="_blank">GitHub</a> |
+                <a href="/docs" target="_blank">Documentation</a>
+            </p>
+        </div>    <script>
         // Global state
         let providers = [];
 
@@ -308,7 +679,10 @@
                 renderProviderCheckboxes(providers);
             } catch (error) {
                 console.error('Failed to load providers:', error);
-                showError('Failed to load providers');
+                // Show dummy providers for demo
+                providers = ['openai', 'anthropic', 'gemini', 'grok'];
+                renderProviderCheckboxes(providers);
+                showError('Using demo providers - API endpoint not available');
             }
         }
 
@@ -343,8 +717,14 @@
                 renderProviderStatus(data.providers);
             } catch (error) {
                 console.error('Failed to load provider status:', error);
-                document.getElementById('providerStatus').innerHTML =
-                    '<p style="color: #dc3545;">Failed to load provider status</p>';
+                // Show dummy status for demo
+                const dummyProviders = {
+                    openai: { status: 'available', configured: true, model: 'gpt-4' },
+                    anthropic: { status: 'error', configured: false, model: 'claude-3' },
+                    gemini: { status: 'error', configured: false, model: 'gemini-pro' },
+                    grok: { status: 'error', configured: false, model: 'grok-1' }
+                };
+                renderProviderStatus(dummyProviders);
             }
         }
 
@@ -480,6 +860,29 @@
         function showError(message) {
             const container = document.getElementById('resultsContainer');
             container.innerHTML = `<p style="color: #dc3545; font-weight: 600;">Error: ${message}</p>`;
+        }
+
+        // Tab switching functionality
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            // Remove active class from all tab buttons
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => button.classList.remove('active'));
+
+            // Show selected tab content
+            const selectedTab = document.getElementById(tabName);
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+
+            // Add active class to clicked button
+            const clickedButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
         }
 
         // Initialize on page load

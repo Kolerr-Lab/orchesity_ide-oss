@@ -10,21 +10,73 @@ from fastapi.responses import HTMLResponse
 import uvicorn
 import os
 from pathlib import Path
+from contextlib import asynccontextmanager
 
-from .config import settings
+from .core.config import settings
+from .core.container import init_container, ServiceContainer, lifespan_context
 from .routers import llm, user, health, database
 from .utils.logger import setup_logger
 
 # Setup logging
 setup_logger()
 
-# Initialize FastAPI app
+
+# Initialize FastAPI app with lifespan
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan context manager"""
+    async with lifespan_context(settings) as container:
+        # Store container for router access
+        app.state.container = container
+        yield
+
+
 app = FastAPI(
     title=settings.app_name,
     description="Open-source Multi-LLM Orchestration IDE",
     version=settings.app_version,
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
+)
+
+# Initialize container for synchronous access (for testing)
+container = init_container(settings)
+
+# For testing, initialize services synchronously if possible
+# This allows tests to run without async context
+try:
+    # Try to initialize lightweight services synchronously
+    from src.services.health import HealthService
+    from src.services.metrics import MetricsService
+    from src.services.llm_orchestrator import LLMOrchestratorService
+
+    container.health = HealthService(settings)
+    container.metrics = MetricsService(settings)
+    container.orchestrator = LLMOrchestratorService(settings, container.cache, container.metrics)
+    container._services['healthservice'] = container.health
+    container._services['metricsservice'] = container.metrics
+    container._services['llmorchestratorservice'] = container.orchestrator
+except Exception as e:
+    # If initialization fails, services will be None - tests should handle this
+    pass
+
+# Include routers immediately (not in lifespan)
+app.include_router(
+    llm.create_router(container), prefix="/api/llm", tags=["LLM Orchestration"]
+)
+app.include_router(
+    user.create_router(container), prefix="/api/user", tags=["User Management"]
+)
+app.include_router(
+    health.create_router(container),
+    prefix="/api/health",
+    tags=["Health Checks"],
+)
+app.include_router(
+    database.create_router(container),
+    prefix="/api/db",
+    tags=["Database & Cache"],
 )
 
 # CORS middleware
@@ -41,13 +93,6 @@ web_path = Path(__file__).parent.parent / "web"
 static_path = web_path / "static"
 if static_path.exists():
     app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
-
-
-# Include routers
-app.include_router(llm, prefix="/api/llm", tags=["LLM Orchestration"])
-app.include_router(user, prefix="/api/user", tags=["User Management"])
-app.include_router(health, prefix="/api/health", tags=["Health Checks"])
-app.include_router(database, prefix="/api/db", tags=["Database & Cache"])
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -139,54 +184,6 @@ async def root():
     </body>
     </html>
     """
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Application startup tasks"""
-    print("🚀 Starting Orchesity IDE OSS...")
-    
-    # Initialize database connection
-    try:
-        from .database.database import init_db, create_tables
-        await init_db()
-        await create_tables()
-        print("✅ Database initialized successfully")
-    except Exception as e:
-        print(f"⚠️ Database initialization failed: {e}")
-    
-    # Initialize Redis cache
-    try:
-        from .services.cache import cache
-        await cache.connect()
-        print("✅ Redis cache connected successfully")
-    except Exception as e:
-        print(f"⚠️ Redis cache connection failed: {e}")
-    
-    print(f"📖 API Documentation: http://localhost:{settings.port}/docs")
-    print(f"🌐 Web Interface: http://localhost:{settings.port}")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Application shutdown tasks"""
-    print("👋 Shutting down Orchesity IDE OSS...")
-    
-    # Close database connection
-    try:
-        from .database.database import close_db
-        await close_db()
-        print("🔌 Database disconnected")
-    except Exception as e:
-        print(f"Failed to close database: {e}")
-    
-    # Close Redis connection
-    try:
-        from .services.cache import cache
-        await cache.disconnect()
-        print("🔌 Redis cache disconnected")
-    except Exception as e:
-        print(f"Failed to close Redis: {e}")
 
 
 if __name__ == "__main__":

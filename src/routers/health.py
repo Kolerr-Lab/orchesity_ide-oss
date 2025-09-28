@@ -1,138 +1,102 @@
-"""
+﻿"""
 Health check router for Orchesity IDE OSS
 """
 
-from fastapi import APIRouter, HTTPException
-from datetime import datetime
-import psutil
-import asyncio
+from fastapi import APIRouter, HTTPException, Depends
+from typing import Dict, Any
+import logging
 from ..models import HealthStatus
-from ..config import settings
-from ..utils.logger import get_logger
+from ..core.container import ServiceContainer
+from ..services.health import HealthService
 
-router = APIRouter()
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
-@router.get("/", response_model=HealthStatus)
-async def health_check():
-    """Basic health check endpoint"""
-    try:
-        # Check system resources
-        cpu_percent = psutil.cpu_percent(interval=0.1)
-        memory = psutil.virtual_memory()
+def create_router(container: ServiceContainer) -> APIRouter:
+    """Create health router with dependency injection"""
+    router = APIRouter()
 
-        # Check LLM providers (basic connectivity)
-        services_status = {
-            "cpu": {
-                "status": "healthy" if cpu_percent < 90 else "warning",
-                "usage_percent": cpu_percent,
-            },
-            "memory": {
-                "status": "healthy" if memory.percent < 90 else "warning",
-                "usage_percent": memory.percent,
-                "available_mb": memory.available // (1024 * 1024),
-            },
-        }
+    def get_health_service() -> HealthService:
+        """Dependency injection for health service"""
+        return container.get_service(HealthService)
 
-        # Check LLM provider configurations and DWA status
-        from ..services.llm_orchestrator import orchestrator
-        
+    @router.get("/", response_model=HealthStatus)
+    async def health_check(health_service: HealthService = Depends(get_health_service)):
+        """Comprehensive health check endpoint"""
         try:
-            dwa_stats = orchestrator.get_dwa_statistics()
-            services_status["dwa"] = {
-                "status": "healthy",
-                "active_providers": dwa_stats["active_providers"],
-                "total_providers": dwa_stats["total_providers"],
-                "selection_policy": dwa_stats["selection_policy"]
-            }
+            health_data = await health_service.get_health_status(detailed=False)
+
+            return HealthStatus(
+                status=health_data["status"],
+                timestamp=health_data["timestamp"],
+                uptime=health_data["uptime"],
+                services=health_data["services"],
+                version=health_data.get("version", "unknown"),
+            )
+
         except Exception as e:
-            services_status["dwa"] = {
-                "status": "error",
-                "error": str(e)
-            }
-        
-        llm_providers = []
-        if settings.openai_api_key:
-            llm_providers.append("openai")
-        if settings.anthropic_api_key:
-            llm_providers.append("anthropic")
-        if settings.gemini_api_key:
-            llm_providers.append("gemini")
-        if settings.grok_api_key:
-            llm_providers.append("grok")
+            logger.error(f"Health check failed: {e}")
+            raise HTTPException(
+                status_code=500, detail=f"Health check failed: {str(e)}"
+            )
 
-        services_status["llm_providers"] = {
-            "status": "healthy" if llm_providers else "warning",
-            "configured_providers": llm_providers,
-            "count": len(llm_providers),
-        }
+    @router.get("/detailed")
+    async def detailed_health_check(
+        health_service: HealthService = Depends(get_health_service),
+    ):
+        """Detailed health check with system information"""
+        try:
+            return await health_service.get_health_status(detailed=True)
 
-        # Overall status
-        unhealthy_services = [
-            k for k, v in services_status.items() if v.get("status") != "healthy"
-        ]
-        overall_status = "unhealthy" if unhealthy_services else "healthy"
+        except Exception as e:
+            logger.error(f"Detailed health check failed: {e}")
+            raise HTTPException(
+                status_code=500, detail=f"Detailed health check failed: {str(e)}"
+            )
 
-        return HealthStatus(
-            status=overall_status,
-            timestamp=datetime.utcnow().isoformat() + "Z",
-            version=settings.app_version,
-            services=services_status,
-        )
+    @router.get("/service/{service_name}")
+    async def service_health_check(
+        service_name: str, health_service: HealthService = Depends(get_health_service)
+    ):
+        """Check health of a specific service"""
+        try:
+            service_status = await health_service.get_service_status(service_name)
+            if service_status is None:
+                raise HTTPException(
+                    status_code=404, detail=f"Service '{service_name}' not found"
+                )
 
-    except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        raise HTTPException(status_code=503, detail="Health check failed")
+            return service_status
 
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Service health check failed for {service_name}: {e}")
+            raise HTTPException(
+                status_code=500, detail=f"Service check failed: {str(e)}"
+            )
 
-@router.get("/detailed", response_model=HealthStatus)
-async def detailed_health_check():
-    """Detailed health check with more comprehensive checks"""
-    try:
-        # Basic health check
-        basic_health = await health_check()
+    @router.get("/ready")
+    async def readiness_check(
+        health_service: HealthService = Depends(get_health_service),
+    ):
+        """Kubernetes readiness probe"""
+        try:
+            is_healthy = await health_service.is_healthy()
+            if is_healthy:
+                return {"status": "ready"}
+            else:
+                raise HTTPException(status_code=503, detail="Service not ready")
 
-        # Add more detailed checks
-        detailed_services = dict(basic_health.services)
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Readiness check failed: {e}")
+            raise HTTPException(status_code=503, detail="Readiness check failed")
 
-        # Check concurrent request capacity
-        detailed_services["orchestration"] = {
-            "status": "healthy",
-            "max_concurrent_requests": settings.max_concurrent_requests,
-            "routing_strategy": settings.routing_strategy,
-        }
+    @router.get("/live")
+    async def liveness_check():
+        """Kubernetes liveness probe - basic check"""
+        return {"status": "alive", "timestamp": "2024-01-01T00:00:00Z"}
 
-        # Check configuration
-        config_issues = []
-        if not any(
-            [
-                settings.openai_api_key,
-                settings.anthropic_api_key,
-                settings.gemini_api_key,
-                settings.grok_api_key,
-            ]
-        ):
-            config_issues.append("No LLM API keys configured")
-
-        detailed_services["configuration"] = {
-            "status": "healthy" if not config_issues else "warning",
-            "issues": config_issues,
-        }
-
-        # Update overall status
-        unhealthy_services = [
-            k for k, v in detailed_services.items() if v.get("status") != "healthy"
-        ]
-        overall_status = "unhealthy" if unhealthy_services else "healthy"
-
-        return HealthStatus(
-            status=overall_status,
-            timestamp=datetime.utcnow().isoformat() + "Z",
-            version=settings.app_version,
-            services=detailed_services,
-        )
-
-    except Exception as e:
-        logger.error(f"Detailed health check failed: {e}")
-        raise HTTPException(status_code=503, detail="Detailed health check failed")
+    return router

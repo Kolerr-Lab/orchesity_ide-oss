@@ -25,6 +25,7 @@ class WorkflowStatus(str, Enum):
 
 class OrchestrationRequestCreate(BaseModel):
     """Schema for creating orchestration requests"""
+
     prompt: str
     providers: List[str]
     max_tokens: int = 1000
@@ -35,6 +36,7 @@ class OrchestrationRequestCreate(BaseModel):
 
 class OrchestrationRequestResponse(BaseModel):
     """Schema for orchestration request responses"""
+
     id: int
     request_id: str
     prompt: str
@@ -57,6 +59,7 @@ class OrchestrationRequestResponse(BaseModel):
 
 class OrchestrationResultCreate(BaseModel):
     """Schema for creating orchestration results"""
+
     request_id: str
     provider: str
     model: str
@@ -68,6 +71,7 @@ class OrchestrationResultCreate(BaseModel):
 
 class OrchestrationResultResponse(BaseModel):
     """Schema for orchestration result responses"""
+
     id: int
     request_id: str
     provider: str
@@ -84,6 +88,7 @@ class OrchestrationResultResponse(BaseModel):
 
 class UserSessionCreate(BaseModel):
     """Schema for creating user sessions"""
+
     session_id: str
     user_id: Optional[str] = None
     preferences: Dict[str, Any] = Field(default_factory=dict)
@@ -91,6 +96,7 @@ class UserSessionCreate(BaseModel):
 
 class UserSessionResponse(BaseModel):
     """Schema for user session responses"""
+
     session_id: str
     user_id: Optional[str]
     created_at: datetime
@@ -104,6 +110,7 @@ class UserSessionResponse(BaseModel):
 
 class WorkflowStepSchema(BaseModel):
     """Schema for workflow steps"""
+
     id: str
     name: str
     provider: str
@@ -114,6 +121,7 @@ class WorkflowStepSchema(BaseModel):
 
 class WorkflowCreate(BaseModel):
     """Schema for creating workflows"""
+
     workflow_id: str
     name: str
     description: Optional[str] = None
@@ -123,6 +131,7 @@ class WorkflowCreate(BaseModel):
 
 class WorkflowResponse(BaseModel):
     """Schema for workflow responses"""
+
     id: int
     workflow_id: str
     name: str
@@ -141,6 +150,7 @@ class WorkflowResponse(BaseModel):
 
 class WorkflowExecutionCreate(BaseModel):
     """Schema for creating workflow executions"""
+
     execution_id: str
     workflow_id: str
     input_data: Optional[Dict[str, Any]] = None
@@ -148,6 +158,7 @@ class WorkflowExecutionCreate(BaseModel):
 
 class WorkflowExecutionResponse(BaseModel):
     """Schema for workflow execution responses"""
+
     id: int
     execution_id: str
     workflow_id: str
@@ -167,6 +178,7 @@ class WorkflowExecutionResponse(BaseModel):
 
 class CacheEntryResponse(BaseModel):
     """Schema for cache entry responses"""
+
     id: int
     cache_key: str
     cache_type: str
@@ -183,6 +195,7 @@ class CacheEntryResponse(BaseModel):
 
 class ProviderMetricsResponse(BaseModel):
     """Schema for provider metrics responses"""
+
     id: int
     provider: str
     model: str
@@ -204,6 +217,7 @@ class ProviderMetricsResponse(BaseModel):
 
 class DatabaseStats(BaseModel):
     """Schema for database statistics"""
+
     total_requests: int
     active_sessions: int
     total_workflows: int

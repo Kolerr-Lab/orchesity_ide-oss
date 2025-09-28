@@ -1,5 +1,5 @@
 # Services package
 
-from .llm_orchestrator import LLMOrchestrator
+from .llm_orchestrator import LLMOrchestratorService
 
-__all__ = ["LLMOrchestrator"]
+__all__ = ["LLMOrchestratorService"]

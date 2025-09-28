@@ -16,8 +16,8 @@ def test_health_check():
     response = client.get("/api/health")
     assert response.status_code == 200
     data = response.json()
-    # Accept both healthy and unhealthy status (unhealthy when no LLM providers configured)
-    assert data["status"] in ["healthy", "unhealthy"]
+    # Accept healthy, unhealthy, and degraded status
+    assert data["status"] in ["healthy", "unhealthy", "degraded"]
     assert "timestamp" in data
     assert "services" in data
 

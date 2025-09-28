@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
     debug: bool = True
     log_level: str = "INFO"
+    lightweight_mode: bool = False  # Set to True for minimal dependencies
 
     # Server
     host: str = "0.0.0.0"

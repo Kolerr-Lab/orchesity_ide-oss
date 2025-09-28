@@ -5,7 +5,7 @@ Database connection and operations for Orchesity IDE OSS
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from databases import Database
+from database import Database
 from typing import AsyncGenerator
 
 from ..config import settings
@@ -16,7 +16,9 @@ logger = get_logger(__name__)
 # Database URL conversion for asyncpg
 database_url = settings.database_url
 if database_url.startswith("postgresql://"):
-    async_database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    async_database_url = database_url.replace(
+        "postgresql://", "postgresql+asyncpg://", 1
+    )
 else:
     async_database_url = database_url
 
@@ -51,6 +53,23 @@ metadata = MetaData()
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     """Get async database session"""
+    # Return dummy session in lightweight mode
+    if settings.lightweight_mode:
+        # This is a hack to make FastAPI happy, but won't actually be used
+        class DummySession:
+            async def rollback(self):
+                pass
+
+            async def close(self):
+                pass
+
+        try:
+            yield DummySession()
+        except Exception:
+            pass
+        return
+
+    # Normal database session
     async with AsyncSessionLocal() as session:
         try:
             yield session
@@ -63,6 +82,11 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_db():
     """Initialize database connection"""
+    # Skip database connection in lightweight mode
+    if settings.lightweight_mode:
+        logger.info("⚡ Lightweight mode: Database connection skipped")
+        return
+
     try:
         await database.connect()
         logger.info("✅ Connected to database successfully")
@@ -82,12 +106,17 @@ async def close_db():
 
 async def create_tables():
     """Create database tables"""
+    # Skip table creation in lightweight mode
+    if settings.lightweight_mode:
+        logger.info("⚡ Lightweight mode: Database tables creation skipped")
+        return
+
     try:
         from .models import Base
-        
+
         async with async_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        
+
         logger.info("✅ Database tables created successfully")
     except Exception as e:
         logger.error(f"❌ Failed to create database tables: {e}")
@@ -98,10 +127,10 @@ async def drop_tables():
     """Drop all database tables (for development/testing)"""
     try:
         from .models import Base
-        
+
         async with async_engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
-        
+
         logger.info("🗑️ Database tables dropped successfully")
     except Exception as e:
         logger.error(f"❌ Failed to drop database tables: {e}")
